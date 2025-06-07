@@ -13,7 +13,7 @@ from collections import defaultdict
 from threading import Lock, Timer
 
 # パス設定
-INPUT_DIR = "/app/input"
+INPUT_DIR = "/data"
 STATUS_FILE = "/app/status/status.json"
 COOLDOWN_PERIOD = 2  # 同じファイルの処理間隔（秒）
 SCRIPT_DIR = Path(__file__).parent.absolute()

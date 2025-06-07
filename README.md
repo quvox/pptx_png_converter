@@ -1,13 +1,16 @@
 # PPTX to PNG Converter
 
-PowerPointファイルの1ページ目のスライドから図形を抽出し、PNG画像として保存するDockerコンテナです。
+PowerPointファイルの全ページを個別のPNG画像として自動変換するDockerコンテナです。
 
 ## 機能
 
-- 指定ディレクトリ（とそのサブディレクトリ）内のPPTXファイルを監視
+- 指定ディレクトリ内のPPTXファイルを監視
 - 新規作成・更新されたPPTXファイルを自動検知
-- 1ページ目のスライドをPNG形式で出力
-- ディレクトリ構造を維持したまま出力
+- **全ページを個別のPNG形式で出力**
+- **ノート欄に基づく自動ファイル名生成**
+  - ノート欄にテキストがある場合：そのテキストをファイル名として使用
+  - ノート欄が空の場合：PPTXファイル名 + 連番を使用
+- 高品質変換（300dpi、透過処理、5%マージン追加）
 - エラー時のログ記録とアラート通知
 
 ## 必要条件
@@ -23,34 +26,36 @@ git clone [repository-url]
 cd [repository-name]
 ```
 
-2. テスト用ディレクトリの確認
+2. Dockerイメージのビルドと起動
 ```bash
-tree test/
-test/
-├── input/
-│   ├── dir1/
-│   └── dir2/
-│       └── subdir/
-└── output/
-```
-
-3. Dockerイメージのビルドと起動
-```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 ## 使用方法
 
 1. PPTXファイルを配置
-   - `test/input/`ディレクトリ（またはそのサブディレクトリ）にPPTXファイルを配置
+   - `test/`ディレクトリにPPTXファイルを配置
    - 自動的に変換が開始されます
 
 2. 変換結果の確認
-   - `test/output/`ディレクトリに、入力と同じディレクトリ構造でPNGファイルが出力されます
-   - 例：
-     ```
-     input/dir1/example.pptx → output/dir1/example.png
-     ```
+   - 同じディレクトリに各ページのPNGファイルが出力されます
+   - ファイル名の決定ルール：
+     - **ノート欄にテキストがある場合**：そのテキストがファイル名になります
+       ```
+       example.pptx（1ページ目ノート: "商品説明図"） → 商品説明図.png
+       example.pptx（2ページ目ノート: "価格表"）     → 価格表.png
+       ```
+     - **ノート欄が空の場合**：PPTXファイル名 + ページ番号が付きます
+       ```
+       example.pptx（3ページ目ノート: 空） → example_003.png
+       ```
+
+## 変換例
+
+3ページのPPTXファイル `demo.pptx` の場合：
+- 1ページ目（ノート: "概要説明"） → `概要説明.png`
+- 2ページ目（ノート: "詳細データ"） → `詳細データ.png`
+- 3ページ目（ノート: 空） → `demo_003.png`
 
 ## エラーハンドリング
 
@@ -59,7 +64,7 @@ docker-compose up -d --build
 - JSONフォーマットで詳細な情報が保存されます
 
 ### アラート通知
-- 変換エラー時は`output/.alerts/`ディレクトリにアラートファイルが生成されます
+- 変換エラー時は`.alerts/`ディレクトリにアラートファイルが生成されます
 - アラートファイル名：`{元のファイル名}.error`
 
 ### エラーファイルの保管
@@ -71,20 +76,43 @@ docker-compose up -d --build
 - ファイルサイズ制限：100MB以下
 - 一時ファイル（`~$`で始まるファイル）は無視されます
 - 処理タイムアウト：PDF変換は300秒
+- ノート欄のテキストはファイル名として使用不可能な文字は自動変換されます
 
 ## トラブルシューティング
 
 ### コンテナログの確認
 ```bash
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ### コンテナの再起動
 ```bash
-docker-compose restart
+docker compose restart
 ```
 
 ### 完全な再構築
 ```bash
-docker-compose down
-docker-compose up -d --build
+docker compose down
+docker compose up -d --build
+```
+
+## システム要件
+
+- Docker
+- Docker Compose（v2.0以降推奨）
+- 十分なディスク容量（変換作業用の一時ファイル保存のため）
+
+## ディレクトリ構造
+
+```
+/
+├── test/                    # データディレクトリ（Dockerにマウント）
+│   ├── *.pptx              # 入力PPTXファイル
+│   ├── *.png               # 出力PNGファイル
+│   └── .alerts/            # エラーアラートファイル
+├── scripts/                # 変換スクリプト
+│   ├── watch.py           # ファイル監視
+│   ├── convert.sh         # 変換処理
+│   ├── extract_notes.py   # ノート欄抽出
+│   └── error_handle.sh    # エラー処理
+└── logs/                   # エラーログ（コンテナ内）

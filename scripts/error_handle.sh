@@ -14,7 +14,7 @@ ERROR_MESSAGE="$2"
 
 # パス設定
 LOG_DIR="/app/logs"
-ALERT_DIR="/app/output/.alerts"
+ALERT_DIR="/data/.alerts"
 STATUS_FILE="/app/status/status.json"
 ERROR_FILES_DIR="/app/error_files/$(date +%Y-%m-%d)"
 
@@ -32,8 +32,8 @@ log_error() {
     "file": "$RELATIVE_PATH",
     "error": "$ERROR_MESSAGE",
     "details": {
-        "input_path": "/app/input/$RELATIVE_PATH",
-        "output_path": "/app/output/$(dirname "$RELATIVE_PATH")"
+        "input_path": "/data/$RELATIVE_PATH",
+        "output_path": "/data/$(dirname "$RELATIVE_PATH")"
     }
 }
 EOF
@@ -67,7 +67,7 @@ EOF
 
 # エラーファイルの移動
 move_error_file() {
-    local source_file="/app/input/$RELATIVE_PATH"
+    local source_file="/data/$RELATIVE_PATH"
     if [ -f "$source_file" ]; then
         local target_dir="$ERROR_FILES_DIR/$(dirname "$RELATIVE_PATH")"
         mkdir -p "$target_dir"

@@ -27,8 +27,7 @@ WORKDIR /app
 # 必要なディレクトリの作成
 RUN mkdir -p \
     /app/scripts \
-    /app/input \
-    /app/output \
+    /data \
     /app/logs \
     /app/status \
     /app/error_files
@@ -44,4 +43,4 @@ RUN chmod +x /app/scripts/*.sh /app/scripts/*.py
 CMD ["/usr/bin/python3", "/app/scripts/watch.py"]
 
 # ボリュームの設定
-VOLUME ["/app/input", "/app/output"]
+VOLUME ["/data"]

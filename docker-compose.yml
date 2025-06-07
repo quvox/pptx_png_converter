@@ -1,11 +1,8 @@
-version: '3.8'
-
 services:
   pptx-converter:
     build: .
     volumes:
-      - ./test/input:/app/input
-      - ./test/output:/app/output
+      - ./test:/data
     environment:
       - TZ=Asia/Tokyo
     restart: unless-stopped
